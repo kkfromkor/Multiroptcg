@@ -404,6 +404,47 @@ std::unique_ptr<YGOPro::STOCMsg> Context::CheckDeck(const YGOPro::Deck& deck) co
 			code = search->second;
 		return code >= 879999990U && code <= 880099999U;
 	};
+	// [OPCG 2026-08-15] Leader color legality (user request): every main/side
+	// card must share at least one color with the leader. Data model (cdb):
+	// race 1 = LEADER, attribute = color bitmask (multi-color leaders OR their
+	// colors). The leader rides in the "extra" pile. Reported as CARD_UNOFFICIAL
+	// so legacy clients still print "unofficial card: <name>"; rev39+ clients
+	// key on the OPCG code range to show the color-mismatch wording instead.
+	// Skipped when no OPCG leader is present (non-OPCG rooms are unaffected).
+	{
+		uint32_t leaderColors = 0U;
+		bool hasLeader = false;
+		for(const auto code : deck.Extra())
+		{
+			const auto& d = cdb->DataFromCode(code);
+			if(IsOpcgCode(code) && d.race == 1U)
+			{
+				leaderColors |= d.attribute;
+				hasLeader = true;
+			}
+		}
+		if(hasLeader && leaderColors != 0U)
+		{
+			auto CheckPile = [&](const CodeVector& pile) -> uint32_t
+			{
+				for(const auto code : pile)
+				{
+					if(!IsOpcgCode(code))
+						continue;
+					const auto& d = cdb->DataFromCode(code);
+					if(d.race == 1U) // stray leader in main/side is caught elsewhere
+						continue;
+					if((d.attribute & leaderColors) == 0U)
+						return code;
+				}
+				return 0U;
+			};
+			if(const auto bad = CheckPile(deck.Main()); bad != 0U)
+				return MakeErrorPtr(CARD_UNOFFICIAL, bad);
+			if(const auto bad = CheckPile(deck.Side()); bad != 0U)
+				return MakeErrorPtr(CARD_UNOFFICIAL, bad);
+		}
+	}
 	for(const auto code : codes)
 	{
 		const uint32_t totalCount = GetTotalCount(code);
