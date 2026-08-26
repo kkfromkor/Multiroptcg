@@ -466,6 +466,22 @@ std::unique_ptr<YGOPro::STOCMsg> Context::CheckDeck(const YGOPro::Deck& deck) co
 		if((banlist != nullptr) && CheckBanlist(code, totalCount, *banlist))
 			return MakeErrorPtr(CARD_BANLISTED, code);
 	}
+	// [OPCG 2026-08-26] 금지 페어(공식 금제 2026-04/07): A와 B를 같은 덱에서 동시에
+	// 사용할 수 없다. lflist 포맷으로 표현이 안 되므로 금제 선택 시에만 여기서 직접
+	// 검사한다. 코드는 alias 정규화된 베이스(GetTotalCount와 동일 규약).
+	if(banlist != nullptr)
+	{
+		// GetTotalCount는 별쇄 포함 합산(post-alias aliased 맵; 미포함 코드는 0)
+		auto CountOf = [&](uint32_t base) -> std::size_t { return GetTotalCount(base); };
+		static constexpr std::pair<uint32_t, uint32_t> OPCG_BANNED_PAIRS[] =
+		{
+			{880001374U, 880001045U}, // OP11-040 몽키 D. 루피 x OP08-069 샬롯 링링 (2026-04-01)
+			{880001374U, 880001401U}, // OP11-040 몽키 D. 루피 x OP11-067 카타쿠리 (2026-07-01)
+		};
+		for(const auto& pair : OPCG_BANNED_PAIRS)
+			if(CountOf(pair.first) > 0U && CountOf(pair.second) > 0U)
+				return MakeErrorPtr(CARD_BANLISTED, pair.second);
+	}
 	return nullptr;
 }
 
