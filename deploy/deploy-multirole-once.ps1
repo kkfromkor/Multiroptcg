@@ -6,6 +6,7 @@
 # 실패 시 .prev로 되돌리고 시끄럽게 알린다.
 param([switch]$Force)
 $ErrorActionPreference = "Stop"
+try { [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 } catch {}
 $runDir = "E:\run"
 $assetBase = "https://raw.githubusercontent.com/kkfromkor/Multiroptcg/master/deploy"
 $lobbyUrl = "http://127.0.0.1:7922/"   # LobbyListing 포트(방 수 조회)
