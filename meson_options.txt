@@ -1,2 +1,3 @@
 option('use_tcmalloc', type : 'feature', value : 'auto', description : 'Use Google\'s TCMalloc for memory allocation instead of default allocator')
 option('fmt_ho', type : 'boolean', value : false, description : 'Use header-only version of {fmt}')
+option('msvc_env_libs', type : 'boolean', value : false, description : 'Find deps via MSVC INCLUDE/LIB env vars instead of pkg-config (local Windows builds)')

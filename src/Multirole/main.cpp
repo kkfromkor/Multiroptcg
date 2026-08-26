@@ -45,6 +45,11 @@ inline int CreateAndRunServerInstance() noexcept
 int main()
 {
 	git_libgit2_init();
+	// [OPCG 2026-08-26] openssl 전송 libgit2(MSVC/vcpkg 빌드)는 CA 번들이 없으면
+	// https 저장소 동기화가 "SSL certificate is invalid"로 죽는다. 실행 폴더의
+	// cacert.pem을 자동 인식(없으면 종전 동작 - winhttp/시스템 인증서 빌드 무해).
+	if(std::ifstream("./cacert.pem").good())
+		git_libgit2_opts(GIT_OPT_SET_SSL_CERT_LOCATIONS, "./cacert.pem", nullptr);
 	sqlite3_config(SQLITE_CONFIG_MULTITHREAD);
 	sqlite3_initialize();
 	int exitFlag = CreateAndRunServerInstance();

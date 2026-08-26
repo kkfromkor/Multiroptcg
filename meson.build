@@ -16,10 +16,26 @@ atomic_dep  = cc.find_library('atomic', required : false)
 boost_dep   = dependency('boost', version : '>=1.78', static : static_deps)
 dl_dep      = cc.find_library('dl', required : false)
 fs_dep      = cc.find_library('stdc++fs', required : false)
-libgit2_dep = dependency('libgit2', static : static_deps)
-openssl_dep = dependency('openssl', static : static_deps)
+if get_option('msvc_env_libs')
+	# [OPCG 2026-08-26] 로컬 윈도우 빌드: pkg-config 없이 MSVC INCLUDE/LIB 환경변수로
+	# vcpkg(x86-windows-static) 정적 라이브러리를 직결한다. 정적 openssl/libgit2가
+	# 요구하는 윈도우 시스템 라이브러리를 함께 링크.
+	libgit2_dep = declare_dependency(dependencies : [
+		cc.find_library('git2'), cc.find_library('libssh2'), cc.find_library('zlib'),
+		cc.find_library('winhttp'), cc.find_library('rpcrt4'), cc.find_library('secur32'),
+	])
+	openssl_dep = declare_dependency(dependencies : [
+		cc.find_library('libssl'), cc.find_library('libcrypto'),
+		cc.find_library('crypt32'), cc.find_library('ws2_32'), cc.find_library('advapi32'),
+		cc.find_library('user32'), cc.find_library('gdi32'),
+	])
+	sqlite3_dep = cc.find_library('sqlite3')
+else
+	libgit2_dep = dependency('libgit2', static : static_deps)
+	openssl_dep = dependency('openssl', static : static_deps)
+	sqlite3_dep = dependency('sqlite3', static : static_deps)
+endif
 rt_dep      = cc.find_library('rt', required : false)
-sqlite3_dep = dependency('sqlite3', static : static_deps)
 tcm_dep     = dependency('libtcmalloc_minimal', required : get_option('use_tcmalloc'), static : static_deps)
 thread_dep  = dependency('threads')
 
@@ -36,10 +52,15 @@ if is_mingw
 endif
 
 # Get fmt dependency and configure so it's header-only
-fmt_dep = dependency('fmt', version : '>=6.0.0', static : static_deps and not get_option('fmt_ho'))
-if get_option('fmt_ho')
-	fmt_dep = declare_dependency(compile_args : '-DFMT_HEADER_ONLY', dependencies : fmt_dep)
-	fmt_dep = fmt_dep.partial_dependency(compile_args : true, includes : true)
+if get_option('msvc_env_libs')
+	# 헤더는 INCLUDE 환경변수(fmt8 include 선행)로 온다 - 헤더 온리 강제.
+	fmt_dep = declare_dependency(compile_args : '-DFMT_HEADER_ONLY')
+else
+	fmt_dep = dependency('fmt', version : '>=6.0.0', static : static_deps and not get_option('fmt_ho'))
+	if get_option('fmt_ho')
+		fmt_dep = declare_dependency(compile_args : '-DFMT_HEADER_ONLY', dependencies : fmt_dep)
+		fmt_dep = fmt_dep.partial_dependency(compile_args : true, includes : true)
+	endif
 endif
 
 multirole_src_files = files([
