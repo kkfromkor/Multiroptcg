@@ -245,10 +245,19 @@ MsgDistType GetMessageDistributionType(const Msg& msg) noexcept
 		// EDOPro client host's routing) then send to specific team duelist.
 		if(Read<uint32_t>(ptr) != 0U)
 		{
-			ptr += 4U + 1U;
+			ptr += 4U;
+			const auto controller = Read<uint8_t>(ptr);
 			const auto location = Read<uint8_t>(ptr);
 			if(location == LOCATION_DECK || location == LOCATION_EXTRA)
-				return MsgDistType::MSG_DIST_TYPE_SPECIFIC_TEAM_DUELIST;
+			{
+				// [OPCG rev46] 수신자(msg[1])==카드 주인이면 본인만 보는 비공개
+				// 열람 — 종전대로 듀얼리스트 전용. 수신자!=주인이면 주인이 상대에게
+				// 보여주는 공개 리빌(서치 공개, 트리거 공개 등) — 양 듀얼리스트가
+				// 아는 공개 정보이므로 관전자에게도 중계한다(관전 서치 사각 해소).
+				if(GetMessageReceivingTeam(msg) == controller)
+					return MsgDistType::MSG_DIST_TYPE_SPECIFIC_TEAM_DUELIST;
+				return MsgDistType::MSG_DIST_TYPE_SPECIFIC_TEAM_DUELIST_AND_SPECTATORS;
+			}
 		}
 		return MsgDistType::MSG_DIST_TYPE_EVERYONE;
 	}

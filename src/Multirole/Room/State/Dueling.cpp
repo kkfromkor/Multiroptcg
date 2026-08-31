@@ -464,6 +464,18 @@ std::optional<Context::DuelFinishReason> Context::Process(State::Dueling& s) noe
 			client.Send(MakeGameMsg(msg));
 			break;
 		}
+		case MsgDistType::MSG_DIST_TYPE_SPECIFIC_TEAM_DUELIST_AND_SPECTATORS:
+		{
+			// [OPCG rev46] 공개 리빌(수신자!=카드 주인인 덱/라이프 CONFIRM):
+			// 수신 듀얼리스트에게 보내고 관전자에게도 중계한다. 캐시에 넣어
+			// 중도 합류 관전자도 받게 하되, 클라는 catch-up 중 확인창을
+			// 띄우지 않으므로 재생 시 무해하다.
+			uint8_t team = GetMessageReceivingTeam(msg);
+			auto& client = GetCurrentTeamClient(s, GetSwappedTeam(team));
+			client.Send(MakeGameMsg(msg));
+			SendToSpectators(SaveToSpectatorCache(s, MakeGameMsg(msg)));
+			break;
+		}
 		case MsgDistType::MSG_DIST_TYPE_SPECIFIC_TEAM:
 		{
 			uint8_t team = GetMessageReceivingTeam(msg);
