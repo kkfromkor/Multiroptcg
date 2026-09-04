@@ -46,11 +46,12 @@ void ParseForBanlists(Stream& stream, BanlistMap& banlists)
 	BanlistHash hash = Detail::BANLIST_HASH_MAGIC;
 	bool whitelist = false;
 	Banlist::DictType dict;
+	Banlist::PairList pairs; // [OPCG r47]
 	auto ConditionallyAdd = [&]()
 	{
 		if(hash == Detail::BANLIST_HASH_MAGIC)
 			return;
-		auto banlist = std::make_shared<Banlist>(whitelist, std::move(dict));
+		auto banlist = std::make_shared<Banlist>(whitelist, std::move(dict), std::move(pairs));
 		banlists.emplace(std::piecewise_construct,
 			std::forward_as_tuple(hash),
 			std::forward_as_tuple(std::move(banlist))
@@ -71,6 +72,34 @@ void ParseForBanlists(Stream& stream, BanlistMap& banlists)
 			whitelist = true;
 			continue;
 		}
+		// [OPCG r47] 금지 페어 지시자 "$pair <A> <B> [<B2> ...] [--주석]": A는 각 B와 같은 덱 불가.
+		// 해시에는 반영하지 않는다(클라 LoadLFListSingle과 동일 규약 - 구 버전과 해시 호환).
+		// 형식이 어긋난 줄은 리스트 전체를 죽이지 않고 건너뛴다.
+		if(l.rfind("$pair", 0U) == 0U)
+		{
+			std::vector<uint32_t> codes;
+			for(std::size_t i = 5U; i < l.size();)
+			{
+				if(l.compare(i, 2U, "--") == 0)
+					break;
+				if(l[i] < '0' || l[i] > '9')
+				{
+					++i;
+					continue;
+				}
+				auto end = l.find_first_not_of("0123456789", i);
+				if(end == std::string::npos)
+					end = l.size();
+				uint32_t code = 0U;
+				if(std::from_chars(l.data() + i, l.data() + end, code).ec == std::errc())
+					codes.push_back(code);
+				i = end;
+			}
+			for(std::size_t k = 1U; k < codes.size(); ++k)
+				if(codes[0U] != 0U && codes[k] != 0U && codes[0U] != codes[k])
+					pairs.emplace_back(codes[0U], codes[k]);
+			continue;
+		}
 		switch(l[0U])
 		{
 		case '!':
@@ -80,6 +109,7 @@ void ParseForBanlists(Stream& stream, BanlistMap& banlists)
 			hash = Detail::BANLIST_HASH_MAGIC;
 			whitelist = false;
 			dict.clear();
+			pairs.clear();
 			continue;
 		}
 		case '0': case '1': case '2': case '3': case '4':

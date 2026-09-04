@@ -187,6 +187,25 @@ STOCMsg STOCMsgFactory::MakeDeckError(Error::DeckOrCard type, uint32_t code)
 	};
 }
 
+// [OPCG r47] 금지 페어 오류: type=CARD_OPCG_PAIR, count.current=A, code=B
+STOCMsg STOCMsgFactory::MakeDeckErrorPair(uint32_t a, uint32_t b)
+{
+	return
+	{
+		STOCMsg::DeckErrorMsg
+		{
+			2U,
+			static_cast<uint32_t>(Error::CARD_OPCG_PAIR),
+			{
+				a,
+				0U,
+				0U
+			},
+			b
+		}
+	};
+}
+
 STOCMsg STOCMsgFactory::MakeDeckError(
 	Error::DeckOrCard type,
 	std::size_t got,

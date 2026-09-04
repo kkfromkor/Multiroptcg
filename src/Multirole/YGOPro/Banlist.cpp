@@ -3,9 +3,10 @@
 namespace YGOPro
 {
 
-Banlist::Banlist(bool whitelist, DictType dict) noexcept :
+Banlist::Banlist(bool whitelist, DictType dict, PairList pairs) noexcept :
 	whitelist(whitelist),
-	dict(std::move(dict))
+	dict(std::move(dict)),
+	pairs(std::move(pairs))
 {}
 
 bool Banlist::IsWhitelist() const noexcept
@@ -16,6 +17,11 @@ bool Banlist::IsWhitelist() const noexcept
 const Banlist::DictType& Banlist::Dict() const noexcept
 {
 	return dict;
+}
+
+const Banlist::PairList& Banlist::Pairs() const noexcept
+{
+	return pairs;
 }
 
 } // namespace YGOPro

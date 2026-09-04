@@ -31,6 +31,7 @@ enum DeckOrCard : uint8_t
 	CARD_MORE_THAN_3      = 0x5,
 	CARD_UNOFFICIAL       = 0xA,
 	CARD_FORBIDDEN_TYPE   = 0x9,
+	CARD_OPCG_PAIR        = 0xE, // [OPCG r47] 금지 페어(code=B, count.current=A) - 클라 DeckError::OPCGPAIR
 };
 
 } // namespace Error
@@ -105,6 +106,7 @@ public:
 	// Error messages
 	static YGOPro::STOCMsg MakeJoinError(Error::Join type);
 	static YGOPro::STOCMsg MakeDeckError(Error::DeckOrCard type, uint32_t code);
+	static YGOPro::STOCMsg MakeDeckErrorPair(uint32_t a, uint32_t b); // [OPCG r47] 금지 페어
 	static YGOPro::STOCMsg MakeDeckError(
 		Error::DeckOrCard type,
 		std::size_t got,
