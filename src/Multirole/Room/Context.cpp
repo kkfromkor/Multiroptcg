@@ -3,6 +3,7 @@
 #include "../I18N.hpp"
 #include "../STOCMsgFactory.hpp"
 #include "../Service/DataProvider.hpp"
+#include "../Service/DeckLimitProvider.hpp"
 #include "../Service/LogHandler.hpp"
 #include "../YGOPro/Banlist.hpp"
 #include "../YGOPro/CardDatabase.hpp"
@@ -449,7 +450,19 @@ std::unique_ptr<YGOPro::STOCMsg> Context::CheckDeck(const YGOPro::Deck& deck) co
 	{
 		const uint32_t totalCount = GetTotalCount(code);
 		const bool opcg = IsOpcgCode(code);
-		if(totalCount > (opcg ? 4U : 3U))
+		// [OPCG] 같은 카드 번호 4장 상한. 단 "룰상, 덱에 몇 장이든" 카드는 저장소
+		// deck_limits.txt(DeckLimitProvider, alias 정규화 베이스 코드 키)의 상한을
+		// 따른다 — 클라이언트 에디터/덱 검사와 같은 데이터(종전 4 하드코딩은 예외
+		// 카드를 방 입장에서 거부했다: OP16-042 유저 제보 2026-09-11).
+		std::size_t copyLimit = opcg ? 4U : 3U;
+		if(opcg)
+		{
+			uint32_t base = code;
+			if(auto search = aliases.find(code); search != aliases.end())
+				base = search->second;
+			copyLimit = svc.deckLimitProvider.LimitFor(base, copyLimit);
+		}
+		if(totalCount > copyLimit)
 			return MakeErrorPtr(CARD_MORE_THAN_3, code);
 		if(!opcg)
 		{

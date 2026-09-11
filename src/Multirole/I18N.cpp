@@ -70,6 +70,11 @@ Str CLIENT_ROOM_KICKED = "{0} has been kicked.";
 Str BANLIST_PROVIDER_LOADING_ONE = "Loading up {0}...";
 Str BANLIST_PROVIDER_COULD_NOT_LOAD_ONE = "Could not load banlist: {0}";
 
+Str DECK_LIMIT_PROVIDER_LOADING_ONE = "Loading up deck limit table {0}...";
+Str DECK_LIMIT_PROVIDER_COULD_NOT_LOAD_ONE = "Could not load deck limit table: {0}";
+Str DECK_LIMIT_PROVIDER_TOTAL_LOADED = "Deck limit overrides loaded: {0}";
+Str DECK_LIMIT_PROVIDER_CLEARED = "Deck limit table removed from repository; overrides cleared.";
+
 Str CORE_PROVIDER_COULD_NOT_CREATE_TMP_DIR = "CoreProvider: Could not create temporary directory.";
 Str CORE_PROVIDER_PATH_IS_FILE_NOT_DIR = "CoreProvider: Temporary directory path points to a file.";
 Str CORE_PROVIDER_WRONG_CORE_TYPE = "CoreProvider: No other core type is implemented.";

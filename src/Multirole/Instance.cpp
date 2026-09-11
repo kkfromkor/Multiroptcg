@@ -34,6 +34,23 @@ inline Service::CoreProvider::CoreType GetCoreType(std::string_view str)
 	return ret;
 }
 
+// [OPCG] deckLimitProvider 설정 블록은 선택 사항: 없으면 금제 프로바이더와 같은
+// 저장소를 관측하고 파일명은 deck_limits.txt 고정 — 기존 서버 config.json을
+// 고치지 않아도 예외표가 적용된다.
+inline const boost::json::value& DeckLimitCfg(const boost::json::value& cfg)
+{
+	if(const auto* p = cfg.as_object().if_contains("deckLimitProvider"))
+		return *p;
+	return cfg.at("banlistProvider");
+}
+
+inline std::string DeckLimitRegex(const boost::json::value& cfg)
+{
+	if(const auto* p = cfg.as_object().if_contains("deckLimitProvider"))
+		return std::string(p->at("fileRegex").as_string().c_str());
+	return "deck_limits\\.txt";
+}
+
 } // namespace
 
 // public
@@ -52,13 +69,14 @@ Instance::Instance(const boost::json::value& cfg) :
 		GetCoreType(cfg.at("coreProvider").at("coreType").as_string()),
 		cfg.at("coreProvider").at("loadPerRoom").as_bool()),
 	dataProvider(logHandler, cfg.at("dataProvider").at("fileRegex").as_string()),
+	deckLimitProvider(logHandler, DeckLimitRegex(cfg)),
 	replayManager(
 		logHandler,
 		cfg.at("replayManager").at("save").as_bool(),
 		cfg.at("replayManager").at("path").as_string().data()),
 	scriptProvider(logHandler, cfg.at("scriptProvider").at("fileRegex").as_string()),
-	service({banlistProvider, coreProvider, dataProvider, logHandler,
-		replayManager, scriptProvider}),
+	service({banlistProvider, coreProvider, dataProvider, deckLimitProvider,
+		logHandler, replayManager, scriptProvider}),
 	lobby(cfg.at("lobbyMaxConnections").to_number<int>()),
 	lobbyListing(
 		lIoCtx,
@@ -90,6 +108,7 @@ Instance::Instance(const boost::json::value& cfg) :
 	RegRepos(dataProvider, cfg.at("dataProvider"));
 	RegRepos(scriptProvider, cfg.at("scriptProvider"));
 	RegRepos(banlistProvider, cfg.at("banlistProvider"));
+	RegRepos(deckLimitProvider, DeckLimitCfg(cfg));
 	RegRepos(coreProvider, cfg.at("coreProvider"));
 	// Register signal
 	LOG_INFO(I18N::MULTIROLE_SETUP_SIGNAL);

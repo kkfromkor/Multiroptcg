@@ -10,6 +10,7 @@ struct Service final
 	SERVICE(BanlistProvider, banlistProvider)
 	SERVICE(CoreProvider, coreProvider)
 	SERVICE(DataProvider, dataProvider)
+	SERVICE(DeckLimitProvider, deckLimitProvider)
 	SERVICE(LogHandler, logHandler)
 	SERVICE(ReplayManager, replayManager)
 	SERVICE(ScriptProvider, scriptProvider)

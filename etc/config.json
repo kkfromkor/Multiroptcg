@@ -18,6 +18,12 @@
 		],
 		"fileRegex": ".*\\.lflist\\.conf"
 	},
+	"deckLimitProvider": {
+		"observedRepos": [
+			"optcg-data"
+		],
+		"fileRegex": "deck_limits\\.txt"
+	},
 	"coreProvider": {
 		"observedRepos": [
 			"optcg-data"

@@ -91,6 +91,7 @@ multirole_src_files = files([
 	'src/Multirole/Service/BanlistProvider.cpp',
 	'src/Multirole/Service/CoreProvider.cpp',
 	'src/Multirole/Service/DataProvider.cpp',
+	'src/Multirole/Service/DeckLimitProvider.cpp',
 	'src/Multirole/Service/LogHandler.cpp',
 	'src/Multirole/Service/ReplayManager.cpp',
 	'src/Multirole/Service/ScriptProvider.cpp',

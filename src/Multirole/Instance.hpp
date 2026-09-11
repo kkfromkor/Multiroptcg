@@ -14,6 +14,7 @@
 #include "Service/BanlistProvider.hpp"
 #include "Service/CoreProvider.hpp"
 #include "Service/DataProvider.hpp"
+#include "Service/DeckLimitProvider.hpp"
 #include "Service/LogHandler.hpp"
 #include "Service/ReplayManager.hpp"
 #include "Service/ScriptProvider.hpp"
@@ -35,6 +36,7 @@ private:
 	Service::BanlistProvider banlistProvider;
 	Service::CoreProvider coreProvider;
 	Service::DataProvider dataProvider;
+	Service::DeckLimitProvider deckLimitProvider;
 	Service::ReplayManager replayManager;
 	Service::ScriptProvider scriptProvider;
 	Service service;
