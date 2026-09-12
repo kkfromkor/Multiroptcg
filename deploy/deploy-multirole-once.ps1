@@ -36,10 +36,24 @@ foreach ($name in @("multirole.exe", "hornet.exe", "cacert.pem")) {
 
 if (-not $Force) {
     Write-Host "방 0개 대기 중... (-Force 로 건너뜀)"
+    # rooms 치역: 0=비었음 / n>0=사용 중 / -1=로비(7922) 무응답.
+    # -1을 0 취급하면 방 있는 채 교체하고, 무시하면 죽은 서버 앞에서 영원히 기다린다(폴러 ==0 사고와 동일 클래스).
+    # → 연속 6회(약 3분) 무응답이면 서버 다운/로비 폐쇄로 판정, 경고 후 교체를 진행한다(교체가 이 스크립트의 목적).
+    $noResp = 0
     while ($true) {
         $n = Get-RoomCount
-        Write-Host ("rooms={0}" -f $n)
-        if ($n -eq 0) { break }
+        if ($n -eq 0) { Write-Host "rooms=0"; break }
+        if ($n -lt 0) {
+            $noResp++
+            Write-Host ("rooms=조회실패({0}/6) - 로비 {1} 무응답" -f $noResp, $lobbyUrl)
+            if ($noResp -ge 6) {
+                Write-Host "!!! 로비가 3분째 무응답 - 서버 다운/로비 폐쇄로 보고 교체를 진행합니다 (방 유무 확인 불가)" -ForegroundColor Yellow
+                break
+            }
+        } else {
+            $noResp = 0
+            Write-Host ("rooms={0}" -f $n)
+        }
         Start-Sleep -Seconds 30
     }
 }
