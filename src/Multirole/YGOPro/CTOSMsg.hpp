@@ -1,6 +1,7 @@
 #ifndef CTOSMSG_HPP
 #define CTOSMSG_HPP
 #include <array>
+#include <cstddef>
 #include <optional>
 #include "MsgCommon.hpp"
 
@@ -36,6 +37,7 @@ public:
 		TRY_KICK      = 0x24,
 		TRY_START     = 0x25,
 		REMATCH       = 0xF0,
+		JOIN_GAME_INVITE = 0xF1,
 	};
 
 	struct RPSChoice
@@ -69,6 +71,20 @@ public:
 		ClientVersion version;
 	};
 
+	// Private extension. The legacy JOIN_GAME packet remains exactly 52 bytes.
+	struct JoinGameInvite
+	{
+		JoinGame join;
+		char token[32U]; // Lowercase hex, without a terminating NUL.
+	};
+	static_assert(sizeof(JoinGame) == 52U);
+	static_assert(offsetof(JoinGame, id) == 4U);
+	static_assert(offsetof(JoinGame, pass) == 8U);
+	static_assert(offsetof(JoinGame, version) == 48U);
+	static_assert(offsetof(JoinGameInvite, join) == 0U);
+	static_assert(offsetof(JoinGameInvite, token) == 52U);
+	static_assert(sizeof(JoinGameInvite) == 84U);
+
 	struct TryKick
 	{
 		uint8_t pos;
@@ -95,7 +111,7 @@ public:
 
 	inline bool IsHeaderValid() const noexcept
 	{
-		if(GetLength() > MSG_MAX_LENGTH)
+		if(GetLength() < 0 || GetLength() > MSG_MAX_LENGTH)
 			return false;
 		switch(GetType())
 		{
@@ -106,6 +122,7 @@ public:
 		case MsgType::PLAYER_INFO:
 		case MsgType::CREATE_GAME:
 		case MsgType::JOIN_GAME:
+		case MsgType::JOIN_GAME_INVITE:
 		case MsgType::LEAVE_GAME:
 		case MsgType::SURRENDER:
 		case MsgType::TIME_CONFIRM:
@@ -138,6 +155,7 @@ public:
 	X(PlayerInfo)
 	X(CreateGame)
 	X(JoinGame)
+	X(JoinGameInvite)
 	X(TryKick)
 	X(Rematch)
 #undef X

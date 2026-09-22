@@ -246,6 +246,11 @@ private:
 			hi.duelFlagsLow |= 0x200000U;
 			// Let the lobby make the room so we can list it later.
 			auto room = roomHosting.lobby.MakeRoom(info);
+			if(!room)
+			{
+				PushToWriteQueue(PrebuiltMsgId::PREBUILT_GENERIC_JOIN_ERROR);
+				return Status::STATUS_ERROR;
+			}
 			// Add the client to the newly created room.
 			std::make_shared<Room::Client>(
 				roomHosting.lobby,
@@ -256,6 +261,7 @@ private:
 			return Status::STATUS_MOVED;
 		}
 		case YGOPro::CTOSMsg::MsgType::JOIN_GAME:
+		case YGOPro::CTOSMsg::MsgType::JOIN_GAME_INVITE:
 		{
 			// NOTE: Implicitly checks that we already received and processed
 			// CTOS PLAYER_INFO successfully.
@@ -265,14 +271,21 @@ private:
 				PushToWriteQueue(PrebuiltMsgId::PREBUILT_GENERIC_JOIN_ERROR);
 				return Status::STATUS_ERROR;
 			}
-			const auto p = incoming.GetJoinGame();
+			const bool byInvite = incoming.GetType() == YGOPro::CTOSMsg::MsgType::JOIN_GAME_INVITE;
+			const auto invite = byInvite ? incoming.GetJoinGameInvite() : std::nullopt;
+			const auto p = byInvite
+				? (invite ? std::optional<YGOPro::CTOSMsg::JoinGame>{invite->join} : std::nullopt)
+				: incoming.GetJoinGame();
 			if(!p || p->version != YGOPro::SERVER_VERSION)
 			{
 				PushToWriteQueue(PrebuiltMsgId::PREBUILT_MSG_VERSION_MISMATCH);
 				return Status::STATUS_ERROR;
 			}
 			auto room = roomHosting.lobby.GetRoomById(p->id);
-			if(!room)
+			// Hold this exact instance through validation and client construction.
+			// A recycled numeric slot can never redirect a stale invite.
+			if(!room || (byInvite && !room->CheckInviteToken(
+				std::string_view(invite->token, sizeof(invite->token)))))
 			{
 				PushToWriteQueue(PrebuiltMsgId::PREBUILT_ROOM_NOT_FOUND);
 				PushToWriteQueue(PrebuiltMsgId::PREBUILT_GENERIC_JOIN_ERROR);

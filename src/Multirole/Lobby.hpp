@@ -20,6 +20,7 @@ public:
 		uint32_t id;
 		const YGOPro::HostInfo* hostInfo;
 		const std::string* notes;
+		const std::string* inviteId;
 		bool passworded : 1;
 		bool started : 1;
 		Room::DuelistsMap duelists;

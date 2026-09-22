@@ -103,6 +103,7 @@ void LobbyListing::DoSerialize()
 			const auto& hi = *rp.hostInfo;
 			auto& room = *ar.emplace_back(boost::json::object(21U, &mr)).if_object();
 			room.emplace("roomid", rp.id);
+			room.emplace("invite_id", *rp.inviteId);
 			room.emplace("roomname", ""); // NOTE: UNUSED but expected atm
 			room.emplace("roomnotes", *rp.notes);
 			room.emplace("roommode", 0); // NOTE: UNUSED but expected atm

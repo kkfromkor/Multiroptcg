@@ -28,6 +28,7 @@ public:
 		RNG::Xoshiro256StarStar::StateType seed;
 		YGOPro::BanlistPtr banlist;
 		YGOPro::HostInfo hostInfo;
+		std::string inviteId;
 	};
 
 	// Ctor and registering.
@@ -41,6 +42,7 @@ public:
 
 	// Get the notes of the room.
 	const std::string& Notes() const noexcept;
+	const std::string& InviteId() const noexcept;
 
 	// Get the game options of the room.
 	const YGOPro::HostInfo& HostInfo() const noexcept;
@@ -51,6 +53,7 @@ public:
 	// Check if the given string matches the set password,
 	// always return true if the password is empty.
 	bool CheckPassword(std::string_view str) const noexcept;
+	bool CheckInviteToken(std::string_view token) const noexcept;
 
 	// Check whether or not the IP was kicked before from this room.
 	bool CheckKicked(std::string_view ip) const noexcept;
@@ -69,6 +72,7 @@ private:
 	TimerAggregator tagg;
 	const std::string notes;
 	const std::string pass;
+	const std::string inviteId;
 	Context ctx;
 
 	StateVariant state;

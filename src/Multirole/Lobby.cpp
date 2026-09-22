@@ -1,4 +1,5 @@
 #include "Lobby.hpp"
+#include "InviteToken.hpp"
 
 #include "RNG/Xoshiro256.hpp"
 #include <chrono>
@@ -58,7 +59,11 @@ std::size_t Lobby::Close()
 
 std::shared_ptr<Room::Instance> Lobby::MakeRoom(Room::Instance::CreateInfo& info)
 {
+	auto inviteId = GenerateInviteToken();
+	if(!inviteId)
+		return nullptr;
 	std::scoped_lock lock(mRooms);
+	info.inviteId = std::move(*inviteId);
 	info.id = [&]()
 	{
 		uint32_t id = 1U;
@@ -107,6 +112,7 @@ void Lobby::CollectRooms(const std::function<void(const RoomProps&)>& f)
 			auto& r = *room;
 			props.hostInfo = &r.HostInfo();
 			props.notes = &r.Notes();
+			props.inviteId = &r.InviteId();
 			props.passworded = r.IsPrivate();
 			props.started = r.Started();
 			props.duelists = r.DuelistNames();

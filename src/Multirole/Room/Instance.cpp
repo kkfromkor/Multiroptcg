@@ -1,4 +1,5 @@
 #include "Instance.hpp"
+#include "../InviteToken.hpp"
 
 namespace Ignis::Multirole::Room
 {
@@ -9,6 +10,7 @@ Instance::Instance(CreateInfo& info) noexcept
 	tagg(*this),
 	notes(std::move(info.notes)),
 	pass(std::move(info.pass)),
+	inviteId(std::move(info.inviteId)),
 	ctx({
 		info.svc,
 		tagg,
@@ -36,6 +38,11 @@ const std::string& Instance::Notes() const noexcept
 	return notes;
 }
 
+const std::string& Instance::InviteId() const noexcept
+{
+	return inviteId;
+}
+
 const YGOPro::HostInfo& Instance::HostInfo() const noexcept
 {
 	return ctx.HostInfo();
@@ -49,6 +56,11 @@ DuelistsMap Instance::DuelistNames() const noexcept
 bool Instance::CheckPassword(std::string_view str) const noexcept
 {
 	return !IsPrivate() || pass == str;
+}
+
+bool Instance::CheckInviteToken(std::string_view token) const noexcept
+{
+	return MatchesInviteToken(inviteId, token);
 }
 
 bool Instance::CheckKicked(std::string_view ip) const noexcept
